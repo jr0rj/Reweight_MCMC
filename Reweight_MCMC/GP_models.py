@@ -56,7 +56,7 @@ class BaseGP(gpytorch.models.ExactGP):
                 optimizer.step()
 
 
-class 1DGPModel(BaseGP):
+class GPModel1d(BaseGP):
     def __init__(self, train_x, train_y, likelihood, kernel):
         super(1DGPModel, self).__init__(train_x, train_y, likelihood, kernel)
     
@@ -102,6 +102,11 @@ class 1DGPModel(BaseGP):
         elif limit == 'hardmax':
             return hardmax(mean),std
         return mean, std
+
+    def mean(self,x,limit='none'):
+        self.eval()
+        self.likelihood.eval()
+        x = torch.tensor(x,dtype = torch.float32)   
     
     
     def eval_mean(self,x, limit = 'none'):
@@ -129,39 +134,14 @@ class 1DGPModel(BaseGP):
             return hardmax(mean)
         return mean
     
-    def optimize(self, training_iter = 100,output = False):
-        self.train()
-        self.likelihood.train()
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.1)  # Includes GaussianLikelihood parameters
-        # "Loss" for GPs - the marginal log likelihood
-        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self)
-        if output ==True:
-            for i in range(training_iter):
-                # Zero gradients from previous iteration
-                optimizer.zero_grad()
-                # Output from model
-                output = self(self.train_x)
-                # Calc loss and backprop gradients
-                loss = -mll(output, self.train_y)
-                loss.backward()
-                print('Iter %d/%d - Loss: %f   lengthscale: %f  outputscale: %f  noise: %f' % (
-                    i + 1, training_iter, loss.item(),
-                    self.covar_module.base_kernel.lengthscale.item(),
-                    self.covar_module.outputscale.item(),
-                    self.likelihood.noise.item(),
-                ))
-                optimizer.step()
-            
-        else:
-            for i in range(training_iter):
-                # Zero gradients from previous iteration
-                optimizer.zero_grad()
-                # Output from model
-                output = self(self.train_x)
-                # Calc loss and backprop gradients
-                loss = -mll(output, self.train_y)
-                loss.backward()
-                optimizer.step()
+
+
+
+class GPModel2d(BaseGP):
+    def __init__(self, train_x, train_y, likelihood, kernel):
+        super(GPModel2d, self).__init__(train_x, train_y, likelihood, kernel)
+    
+
 
 
 
